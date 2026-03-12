@@ -3,54 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minesweeper Pro</title>
+    <title>Minesweeper Ultra</title>
     <style>
         :root {
-            --bg-light: #aad751;
-            --bg-dark: #a2d149;
-            --revealed-light: #e5c29f;
-            --revealed-dark: #d7b899;
-            /* Precise calculation to fit 19x10 on any screen */
-            --cell-size: min(5.2vw, 8.5vh); 
+            --bg-color: #aad751;
+            --bg-alt: #a2d149;
+            --revealed-bg: #e5c29f;
+            --revealed-alt: #d7b899;
+            --cell-size: calc(min(95vw / 19, 80vh / 10));
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        /* HARD DISABLE for scrolling and zooming */
+        html, body {
+            position: fixed;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
             touch-action: none;
             user-select: none;
-        }
-
-        body, html {
+            -webkit-user-select: none;
             margin: 0;
             padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
             background-color: #4a752c;
             font-family: 'Roboto', sans-serif;
-            display: flex;
-            flex-direction: column;
         }
 
-        #header {
-            height: 10vh;
+        #status-bar {
+            height: 15vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            z-index: 10;
+            font-size: 1.8rem;
+            font-weight: 800;
         }
 
-        #status { font-size: 1.5rem; font-weight: 800; margin: 0; }
-
-        #game-area {
-            flex-grow: 1;
+        #game-container {
+            width: 100vw;
+            height: 85vh;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             position: relative;
         }
 
@@ -58,9 +52,9 @@
             display: grid;
             grid-template-columns: repeat(19, var(--cell-size));
             grid-template-rows: repeat(10, var(--cell-size));
-            border: 5px solid #4a752c;
+            border: 4px solid #4a752c;
             border-radius: 4px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            background: #4a752c;
         }
 
         .cell {
@@ -69,33 +63,34 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
+            font-weight: bold;
             font-size: calc(var(--cell-size) * 0.5);
+            transition: background-color 0.1s;
             position: relative;
         }
 
-        /* Checkerboard */
-        .cell.light { background-color: var(--bg-light); }
-        .cell.dark { background-color: var(--bg-dark); }
-        .cell.revealed.light { background-color: var(--revealed-light); }
-        .cell.revealed.dark { background-color: var(--revealed-dark); }
+        /* Grid Colors */
+        .light { background-color: var(--bg-color); }
+        .dark { background-color: var(--bg-alt); }
+        .revealed.light { background-color: var(--revealed-bg); }
+        .revealed.dark { background-color: var(--revealed-alt); }
 
-        /* Animation for Dirt Break */
-        @keyframes break-dirt {
-            0% { transform: scale(1); filter: brightness(1.2); }
-            40% { transform: scale(0.9); }
-            100% { transform: scale(1); filter: brightness(1); }
+        /* Dirt Breaking Effect */
+        @keyframes breakDirt {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); filter: brightness(1.2); }
+            100% { transform: scale(1); opacity: 1; }
         }
-
-        .breaking { animation: break-dirt 0.2s ease-out; }
+        .digging { animation: breakDirt 0.2s ease-out; }
 
         .cell.flagged::after { content: '🚩'; font-size: 0.7em; }
-        .cell.mine::after { content: '💣'; font-size: 0.7em; }
+        .cell.mine::after { content: '💣'; }
 
+        /* Numbers */
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; } .n5 { color: #ff8f00; }
 
-        /* Custom Interaction Menu */
+        /* Interaction Menu */
         #action-menu {
             position: absolute;
             display: none;
@@ -112,37 +107,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             pointer-events: auto;
-            font-size: 26px;
+            font-size: 24px;
         }
 
-        /* Specific Placement: Dig ABOVE, Flag LEFT */
-        #btn-dig { top: -65px; left: -27px; } 
-        #btn-flag { top: -27px; left: -65px; }
-
-        .restart-btn {
-            background: #a2d149;
-            border: none;
+        #btn-dig { bottom: 15px; left: -27px; } /* Above touch point */
+        #btn-flag { top: -27px; right: 15px; } /* Left of touch point */
+        
+        #restart-btn {
+            margin-top: 10px;
             padding: 5px 15px;
-            color: white;
-            border-radius: 4px;
-            margin-top: 5px;
-            cursor: pointer;
+            background: #aad751;
+            border: none;
+            border-radius: 5px;
+            color: #4a752c;
             font-weight: bold;
+            font-size: 1rem;
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="header">
-        <p id="status">Minesweeper</p>
-        <button class="restart-btn" onclick="initGame()">Restart</button>
+    <div id="status-bar">
+        <span id="msg">Minesweeper</span>
+        <button id="restart-btn" onclick="initGame()">RESTART</button>
     </div>
     
-    <div id="game-area">
+    <div id="game-container">
         <div id="grid"></div>
-        
         <div id="action-menu">
             <div id="btn-dig" class="menu-btn">⛏️</div>
             <div id="btn-flag" class="menu-btn">🚩</div>
@@ -152,31 +145,32 @@
 <script>
     const ROWS = 10;
     const COLS = 19;
-    const MINES_COUNT = 35;
+    const MINES = 35;
     
     let board = [];
     let gameOver = false;
+    let minesGenerated = false;
     let selectedCell = null;
-    let firstMove = true;
     let lastTapTime = 0;
 
     const gridEl = document.getElementById('grid');
     const menuEl = document.getElementById('action-menu');
-    const statusEl = document.getElementById('status');
+    const msgEl = document.getElementById('msg');
 
     function initGame() {
         board = [];
         gameOver = false;
-        firstMove = true;
+        minesGenerated = false;
         gridEl.innerHTML = '';
-        statusEl.innerText = "Minesweeper";
-        statusEl.style.color = "white";
+        msgEl.innerText = "Minesweeper";
+        msgEl.style.color = "white";
         
         for (let r = 0; r < ROWS; r++) {
             board[r] = [];
             for (let c = 0; c < COLS; c++) {
                 const cellEl = document.createElement('div');
                 cellEl.classList.add('cell', (r + c) % 2 === 0 ? 'light' : 'dark');
+                
                 cellEl.addEventListener('pointerup', (e) => handleInteraction(e, r, c));
                 
                 board[r][c] = { r, c, isMine: false, revealed: false, flagged: false, neighborCount: 0, el: cellEl };
@@ -185,19 +179,23 @@
         }
     }
 
-    function placeMines(startR, startC) {
+    function generateMines(safeR, safeC) {
         let placed = 0;
-        while (placed < MINES_COUNT) {
+        while (placed < MINES) {
             let r = Math.floor(Math.random() * ROWS);
             let c = Math.floor(Math.random() * COLS);
-            // Ensure mine is not on the first clicked spot
-            if (!board[r][c].isMine && (r !== startR || c !== startC)) {
+            
+            // Ensure mine is not on first click OR any neighbor of first click
+            let distR = Math.abs(r - safeR);
+            let distC = Math.abs(c - safeC);
+            
+            if (!board[r][c].isMine && (distR > 1 || distC > 1)) {
                 board[r][c].isMine = true;
                 placed++;
             }
         }
 
-        // Calculate numbers
+        // Calculate counts
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) continue;
@@ -206,16 +204,7 @@
                 board[r][c].neighborCount = count;
             }
         }
-    }
-
-    function iterateNeighbors(r, c, callback) {
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                let nr = r + dr, nc = c + dc;
-                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) callback(nr, nc);
-            }
-        }
+        minesGenerated = true;
     }
 
     function handleInteraction(e, r, c) {
@@ -223,13 +212,20 @@
         const cell = board[r][c];
         const now = Date.now();
 
-        // Chording (Double Tap)
+        // Chording logic (double tap on revealed number)
         if (now - lastTapTime < 300 && cell.revealed) {
             handleChord(r, c);
             lastTapTime = 0;
             return;
         }
         lastTapTime = now;
+
+        // Requirement: First click always digs automatically and clears an area
+        if (!minesGenerated) {
+            generateMines(r, c);
+            dig(r, c);
+            return;
+        }
 
         if (cell.flagged) {
             toggleFlag(r, c);
@@ -239,38 +235,23 @@
 
         if (cell.revealed) return;
 
+        // Show Menu for subsequent clicks
         selectedCell = cell;
         menuEl.style.display = 'block';
         menuEl.style.top = e.clientY + 'px';
         menuEl.style.left = e.clientX + 'px';
     }
 
-    document.getElementById('btn-dig').onpointerdown = (e) => {
-        e.stopPropagation();
-        if (selectedCell) {
-            if (firstMove) {
-                placeMines(selectedCell.r, selectedCell.c);
-                firstMove = false;
-            }
-            dig(selectedCell.r, selectedCell.c);
-        }
-        menuEl.style.display = 'none';
-    };
-
-    document.getElementById('btn-flag').onpointerdown = (e) => {
-        e.stopPropagation();
-        if (selectedCell) toggleFlag(selectedCell.r, selectedCell.c);
-        menuEl.style.display = 'none';
-    };
-
     function dig(r, c) {
         const cell = board[r][c];
         if (cell.revealed || cell.flagged || gameOver) return;
 
         cell.revealed = true;
-        // Dirt Break Effect
-        cell.el.classList.add('revealed', 'breaking');
+        cell.el.classList.add('revealed', 'digging');
         
+        // Remove 'digging' class after animation so it can be re-triggered
+        setTimeout(() => cell.el.classList.remove('digging'), 200);
+
         if (cell.isMine) {
             endGame(false);
             return;
@@ -295,34 +276,53 @@
         const cell = board[r][c];
         let flags = 0;
         iterateNeighbors(r, c, (nr, nc) => { if (board[nr][nc].flagged) flags++; });
-
         if (flags === cell.neighborCount) {
             iterateNeighbors(r, c, (nr, nc) => { if (!board[nr][nc].flagged) dig(nr, nc); });
         }
     }
 
-    function checkWin() {
-        let rev = 0;
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) if (board[r][c].revealed) rev++;
-        }
-        if (rev === (ROWS * COLS) - MINES_COUNT) endGame(true);
-    }
-
-    function endGame(won) {
-        gameOver = true;
-        statusEl.innerText = won ? "YOU WIN! 🎉" : "GAME OVER! 💥";
-        statusEl.style.color = won ? "#fff" : "#ffeb3b";
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (board[r][c].isMine) {
-                    board[r][c].el.classList.add('mine', 'revealed');
-                    if (!won) board[r][c].el.style.backgroundColor = "#db3236";
-                }
+    function iterateNeighbors(r, c, cb) {
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                let nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc);
             }
         }
     }
 
+    function checkWin() {
+        let revealed = 0;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) if (board[r][c].revealed) revealed++;
+        }
+        if (revealed === (ROWS * COLS) - MINES) endGame(true);
+    }
+
+    function endGame(won) {
+        gameOver = true;
+        msgEl.innerText = won ? "YOU WIN! 🎉" : "GAME OVER! 💥";
+        msgEl.style.color = won ? "#fff" : "#ff4444";
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (board[r][c].isMine) board[r][c].el.classList.add('mine', 'revealed');
+            }
+        }
+    }
+
+    document.getElementById('btn-dig').onpointerup = (e) => {
+        e.stopPropagation();
+        if (selectedCell) dig(selectedCell.r, selectedCell.c);
+        menuEl.style.display = 'none';
+    };
+
+    document.getElementById('btn-flag').onpointerup = (e) => {
+        e.stopPropagation();
+        if (selectedCell) toggleFlag(selectedCell.r, selectedCell.c);
+        menuEl.style.display = 'none';
+    };
+
+    // Close menu on background click
     window.addEventListener('pointerdown', (e) => {
         if (!menuEl.contains(e.target) && !e.target.classList.contains('cell')) {
             menuEl.style.display = 'none';
