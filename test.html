@@ -2,25 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minesweeper</title>
-    <link href="//www.gstatic.com/images/branding/searchlogo/ico/favicon.ico" rel="icon">
     <style>
-        /* Basic reset for a cleaner look */
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #fafafa;
-            font-family: Arial, sans-serif;
-        }
+        body { margin: 0; background-color: #fafafa; font-family: Arial, sans-serif; }
+        #game-core { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
 
     <div id="game-core"></div>
+
+    <script>
+        // COMPATIBILITY LAYER
+        // This creates the empty objects the Google script expects to see.
+        window.google = {
+            tick: function() {},
+            log: function() {},
+            timers: { load: { m: {}, qsubts: Date.now() } },
+            c: { b: true },
+            sn: "web"
+        };
+        window._ = window._ || {};
+    </script>
 
     <script src="logic.js"></script>
 </body>
