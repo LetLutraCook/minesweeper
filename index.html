@@ -8,15 +8,15 @@
         :root {
             --bg-color: #aad751; [cite: 1]
             --bg-alt: #a2d149; [cite: 2]
-            --revealed-bg: #e5c29f; [cite: 1]
+            --revealed-bg: #e5c29f; [cite: 2]
             --revealed-alt: #d7b899; [cite: 2]
-            --header-bg: #4a752c; [cite: 1]
-            --field-border: #578a34; [cite: 1]
+            --header-bg: #4a752c; [cite: 2]
+            --field-border: #578a34; [cite: 2]
             --btn-green: #578a34; [cite: 2]
             --grass-border: #87af3a; [cite: 2]
             --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10)); [cite: 3]
             --border-thick: 5px; [cite: 3]
-        }
+        } [cite: 4]
 
         * {
             box-sizing: border-box; [cite: 4]
@@ -34,7 +34,7 @@
             font-family: sans-serif; [cite: 6]
             display: flex; [cite: 6]
             flex-direction: column; [cite: 6]
-        }
+        } [cite: 7]
 
         #header {
             height: 60px; [cite: 7]
@@ -45,7 +45,7 @@
             color: white; [cite: 8]
             font-weight: bold; [cite: 8]
             z-index: 50; [cite: 8]
-        }
+        } [cite: 9]
 
         #game-container {
             flex-grow: 1; [cite: 9]
@@ -62,7 +62,7 @@
             grid-template-rows: repeat(10, var(--cell-size)); [cite: 11]
             position: relative; [cite: 11]
             border: 8px solid var(--field-border); [cite: 11]
-        }
+        } [cite: 12]
 
         .cell {
             width: var(--cell-size); [cite: 12]
@@ -75,8 +75,8 @@
             width: 100%; height: 100%; [cite: 14]
             z-index: 1; [cite: 14]
         }
-        .dirt.light { background-color: var(--revealed-bg); [cite: 14] }
-        .dirt.dark { background-color: var(--revealed-alt); [cite: 15] }
+        .dirt.light { background-color: var(--revealed-bg); } [cite: 14, 15]
+        .dirt.dark { background-color: var(--revealed-alt); } [cite: 15, 16]
 
         .border-layer {
             position: absolute; [cite: 16]
@@ -86,17 +86,17 @@
             border-style: solid; [cite: 17]
             border-width: 0; [cite: 17]
             border-color: var(--grass-border); [cite: 17]
-        }
+        } [cite: 18]
 
         .grass {
             position: absolute; [cite: 18]
             width: 100%; height: 100%; [cite: 19]
             z-index: 10; [cite: 19]
-            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out; /* Faster fall */
             transform-origin: center; [cite: 20]
-        }
-        .grass.light { background-color: var(--bg-color); [cite: 21] }
-        .grass.dark { background-color: var(--bg-alt); [cite: 22] }
+        } [cite: 21]
+        .grass.light { background-color: var(--bg-color); } [cite: 21, 22]
+        .grass.dark { background-color: var(--bg-alt); } [cite: 22, 23]
 
         .cell.selected::after {
             content: ''; [cite: 24]
@@ -105,18 +105,18 @@
             border: 4px solid var(--btn-green); [cite: 25]
             z-index: 40; [cite: 25]
             pointer-events: none; [cite: 25]
-        }
+        } [cite: 26]
 
         .content { 
             position: absolute; [cite: 26]
-            z-index: 2; [cite: 27] 
+            z-index: 2; [cite: 27]
             display: flex; align-items: center; justify-content: center; [cite: 27]
             width: 100%; height: 100%; [cite: 27]
             font-weight: 900; font-size: calc(var(--cell-size) * 0.6); [cite: 27]
-        }
+        } [cite: 28]
 
-        .n1 { color: #1976d2; } .n2 { color: #388e3c; [cite: 28] } 
-        .n3 { color: #d32f2f; } [cite: 29] .n4 { color: #7b1fa2; [cite: 29] }
+        .n1 { color: #1976d2; } .n2 { color: #388e3c; } [cite: 28, 29]
+        .n3 { color: #d32f2f; } .n4 { color: #7b1fa2; } [cite: 29, 30]
 
         #action-menu {
             position: absolute; [cite: 30]
@@ -125,9 +125,8 @@
             pointer-events: none; [cite: 31]
             width: var(--cell-size); [cite: 31]
             height: var(--cell-size); [cite: 31]
-            top: 0;
-            left: 0;
-        }
+            top: 0; left: 0; /* Anchored via JS */
+        } [cite: 32]
 
         .menu-btn {
             position: absolute; [cite: 32]
@@ -138,31 +137,31 @@
             border-radius: 50%; [cite: 33]
             pointer-events: auto; [cite: 33]
             font-size: calc(var(--cell-size) * 0.6); [cite: 33]
-        }
+        } [cite: 34]
 
-        #btn-dig { bottom: 110%; left: 0; }
-        #btn-flag { top: 0; right: 110%; }
+        #btn-dig { bottom: 110%; left: 0; } [cite: 34, 35]
+        #btn-flag { top: 0; right: 110%; } [cite: 35, 36]
 
         #restart-btn {
             padding: 8px 16px; [cite: 36]
             background: var(--bg-color); [cite: 37]
             border: none; border-radius: 4px; [cite: 37]
             color: var(--header-bg); font-weight: bold; [cite: 37]
-        }
+        } [cite: 38]
     </style>
 </head>
 <body>
 
     <div id="header">
         <span id="msg">minesweeper</span>
-        <button id="restart-btn" onclick="initGame()">RESTART</button> [cite: 38]
+        <button id="restart-btn" onclick="initGame()">RESTART</button>
     </div>
     
     <div id="game-container">
-        <div id="grid"></div> [cite: 38]
+        <div id="grid"></div>
         <div id="action-menu">
-            <div id="btn-dig" class="menu-btn">挖</div> [cite: 38]
-            <div id="btn-flag" class="menu-btn">旗</div> [cite: 38]
+            <div id="btn-dig" class="menu-btn">挖</div>
+            <div id="btn-flag" class="menu-btn">🚩</div>
         </div>
     </div>
 
@@ -196,7 +195,7 @@
                 const content = document.createElement('div'); [cite: 46]
                 content.classList.add('content'); [cite: 46]
 
-                container.append(dirt, borderLayer, grass, content); [cite: 46]
+                container.append(dirt, borderLayer, grass, content); [cite: 47]
                 container.addEventListener('pointerup', (e) => handleTap(e, r, c)); [cite: 47]
                 
                 board[r][c] = { r, c, isMine: false, revealed: false, flagged: false, 
@@ -211,18 +210,18 @@
         const cell = board[r][c]; [cite: 49]
         const now = Date.now(); [cite: 49]
 
-        if (now - lastTap < 300 && cell.revealed) { handleChord(r, c); return; [cite: 49] }
+        if (now - lastTap < 300 && cell.revealed) { handleChord(r, c); return; } [cite: 49, 50]
         lastTap = now; [cite: 50]
 
-        if (!minesGenerated) { generateMines(r, c); dig(r, c); return; [cite: 50] }
-        if (cell.flagged) { toggleFlag(r, c); clearSelection(); return; [cite: 51] }
+        if (!minesGenerated) { generateMines(r, c); dig(r, c); return; } [cite: 50, 51]
+        if (cell.flagged) { toggleFlag(r, c); clearSelection(); return; } [cite: 51, 52]
         if (cell.revealed) return; [cite: 52]
 
         if (selectedCell) selectedCell.el.classList.remove('selected'); [cite: 52]
         selectedCell = cell; [cite: 52]
-        cell.el.classList.add('selected'); [cite: 52]
+        cell.el.classList.add('selected'); [cite: 53]
         
-        // Fix: Use offsetTop/Left to anchor the menu relative to the grid container
+        // Correct anchoring to the grid
         menuEl.style.display = 'block'; [cite: 53]
         menuEl.style.top = `${cell.el.offsetTop}px`;
         menuEl.style.left = `${cell.el.offsetLeft}px`;
@@ -236,12 +235,12 @@
                     cell.borderLayer.style.borderWidth = '0'; [cite: 55]
                     continue; [cite: 56]
                 }
-                const t = (r > 0 && !board[r-1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 56]
-                const b = (r < ROWS-1 && !board[r+1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 57]
-                const l = (c > 0 && !board[r][c-1].revealed) ? 'var(--border-thick)' : '0'; [cite: 58]
+                const t = (r > 0 && !board[r-1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 56, 57]
+                const b = (r < ROWS-1 && !board[r+1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 57, 58]
+                const l = (c > 0 && !board[r][c-1].revealed) ? 'var(--border-thick)' : '0'; [cite: 58, 59]
                 const r_edge = (c < COLS-1 && !board[r][c+1].revealed) ? 'var(--border-thick)' : '0'; [cite: 59]
                 
-                cell.borderLayer.style.borderWidth = `${t} ${r_edge} ${b} ${l}`; [cite: 59]
+                cell.borderLayer.style.borderWidth = `${t} ${r_edge} ${b} ${l}`; [cite: 60]
             }
         }
     }
@@ -251,10 +250,10 @@
         if (cell.revealed || cell.flagged || gameOver) return; [cite: 61]
         cell.revealed = true; [cite: 61]
 
-        // Randomized fall animation logic
-        const randomRot = Math.floor(Math.random() * 60) - 30; // -30 to +30 degrees
-        const randomX = (Math.random() - 0.5) * 30; // Slight horizontal drift
-        cell.grass.style.transform = `translate(${randomX}px, calc(var(--cell-size) * 1.5)) rotate(${randomRot}deg) scale(0.2)`;
+        // Randomized fall animation (+/- 30 degrees, faster)
+        const randomRot = Math.floor(Math.random() * 60) - 30;
+        const randomFallX = (Math.random() - 0.5) * 40;
+        cell.grass.style.transform = `translate(${randomFallX}px, 100px) scale(0) rotate(${randomRot}deg)`;
         cell.grass.style.opacity = "0";
 
         if (cell.isMine) return endGame(false); [cite: 62]
@@ -262,17 +261,17 @@
             cell.content.innerText = cell.neighborCount; [cite: 63]
             cell.content.classList.add('n' + cell.neighborCount); [cite: 64]
         } else {
-            iterate(r, c, (nr, nc) => dig(nr, nc)); [cite: 64]
+            iterate(r, c, (nr, nc) => dig(nr, nc)); [cite: 64, 65]
         }
         updateBorders(); [cite: 65]
-        checkWin(); [cite: 65]
+        checkWin(); [cite: 66]
     }
 
     function toggleFlag(r, c) {
         const cell = board[r][c]; [cite: 66]
         if (cell.revealed) return; [cite: 67]
         cell.flagged = !cell.flagged; [cite: 67]
-        cell.content.innerText = cell.flagged ? '旗' : ''; [cite: 67]
+        cell.content.innerText = cell.flagged ? '🚩' : ''; [cite: 67, 68]
     }
 
     function generateMines(sr, sc) {
@@ -285,46 +284,45 @@
             }
         }
         for (let r = 0; r < ROWS; r++) { [cite: 71]
-            for (let c = 0; c < COLS; c++) { [cite: 71]
-                if (board[r][c].isMine) continue; [cite: 71]
+            for (let c = 0; c < COLS; c++) { [cite: 72]
+                if (board[r][c].isMine) continue; [cite: 72]
                 let n = 0; [cite: 72]
-                iterate(r, c, (nr, nc) => { if (board[nr][nc].isMine) n++; }); [cite: 72]
-                board[r][c].neighborCount = n; [cite: 72]
+                iterate(r, c, (nr, nc) => { if (board[nr][nc].isMine) n++; }); [cite: 73]
+                board[r][c].neighborCount = n; [cite: 73]
             }
         }
-        minesGenerated = true; [cite: 73]
+        minesGenerated = true; [cite: 74]
     }
 
     function clearSelection() {
         if (selectedCell) selectedCell.el.classList.remove('selected'); [cite: 74]
-        selectedCell = null; [cite: 74]
+        selectedCell = null; [cite: 75]
         menuEl.style.display = 'none'; [cite: 75]
     }
 
     function iterate(r, c, cb) {
         for (let dr = -1; dr <= 1; dr++) { [cite: 75]
-            for (let dc = -1; dc <= 1; dc++) { [cite: 75]
-                if (dr === 0 && dc === 0) continue; [cite: 75]
-                let nr = r + dr, nc = c + dc; [cite: 76]
-                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc); [cite: 77]
+            for (let dc = -1; dc <= 1; dc++) { [cite: 76]
+                if (dr === 0 && dc === 0) continue; [cite: 76]
+                let nr = r + dr, nc = c + dc; [cite: 77]
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc); [cite: 77, 78]
             }
         }
     }
 
     function checkWin() {
-        let rev = 0; [cite: 78]
+        let rev = 0; [cite: 79]
         board.flat().forEach(c => { if(c.revealed) rev++; }); [cite: 79]
-        if (rev === (ROWS * COLS) - MINES) endGame(true); [cite: 79]
+        if (rev === (ROWS * COLS) - MINES) endGame(true); [cite: 80]
     }
 
     function endGame(won) {
         gameOver = true; [cite: 80]
-        clearSelection(); [cite: 80]
-        document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥"; [cite: 81]
+        clearSelection(); [cite: 81]
+        document.getElementById('msg').innerText = won ? "WIN! 🏆" : "BOOM! 💥"; [cite: 81]
         board.flat().forEach(c => {
             if (c.isMine) {
-                const randomRot = Math.floor(Math.random() * 60) - 30;
-                c.grass.style.transform = `translateY(50px) rotate(${randomRot}deg) scale(0)`;
+                c.grass.style.transform = `translate(0px, 100px) scale(0)`;
                 c.grass.style.opacity = "0";
                 c.content.innerText = '💣';
             }
@@ -338,11 +336,11 @@
     };
     document.getElementById('btn-flag').onpointerup = (e) => {
         e.stopPropagation(); [cite: 84]
-        if (selectedCell) { toggleFlag(selectedCell.r, selectedCell.c); clearSelection(); [cite: 84] }
+        if (selectedCell) { toggleFlag(selectedCell.r, selectedCell.c); clearSelection(); } [cite: 85]
     };
 
     window.addEventListener('pointerdown', (e) => {
-        if (!menuEl.contains(e.target) && !e.target.closest('.cell')) clearSelection();
+        if (!menuEl.contains(e.target) && !e.target.closest('.cell')) clearSelection(); [cite: 85]
     });
     initGame(); [cite: 86]
 </script>
