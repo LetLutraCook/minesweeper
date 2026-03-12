@@ -93,31 +93,31 @@
         .dirt.light { background-color: var(--revealed-bg); }
         .dirt.dark { background-color: var(--revealed-alt); }
 
-        /* The dynamic border logic */
         .adj-border {
             position: absolute;
             z-index: 4;
             background-color: var(--grass-border);
             pointer-events: none;
         }
-        .adj-top { top: 0; left: 0; width: 100%; height: 2px; }
-        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 2px; }
-        .adj-left { left: 0; top: 0; height: 100%; width: 2px; }
-        .adj-right { right: 0; top: 0; height: 100%; width: 2px; }
+        /* Corners connect by overshooting slightly or matching width exactly */
+        .adj-top { top: 0; left: 0; width: 100%; height: 3px; }
+        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 3px; }
+        .adj-left { left: 0; top: 0; height: 100%; width: 3px; }
+        .adj-right { right: 0; top: 0; height: 100%; width: 3px; }
 
         .grass {
             position: absolute;
             width: 100%;
             height: 100%;
             z-index: 5;
-            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
         .popped {
-            opacity: 0;
+            /* Fading removed per instruction */
             pointer-events: none;
         }
 
@@ -160,8 +160,9 @@
             border: none;
         }
 
-        #btn-dig { top: calc(var(--cell-size) * -1.2); left: 0; }
-        #btn-flag { top: 0; left: calc(var(--cell-size) * -1.2); }
+        /* Buttons positioned directly adjacent to selection */
+        #btn-dig { top: calc(var(--cell-size) * -1); left: 0; }
+        #btn-flag { top: 0; left: calc(var(--cell-size) * -1); }
 
         #restart-btn {
             padding: 8px 16px;
@@ -352,14 +353,20 @@
         menuEl.style.display = 'none';
     }
 
+    function popOff(grass) {
+        const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
+        grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
+        grass.classList.add('popped');
+        // Completely remove element after animation to ensure no "ghost" opacity is left
+        setTimeout(() => grass.remove(), 800);
+    }
+
     function dig(r, c) {
         const cell = board[r][c];
         if (cell.revealed || cell.flagged || gameOver) return;
         
         cell.revealed = true;
-        const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
-        cell.grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
-        cell.grass.classList.add('popped');
+        popOff(cell.grass);
 
         if (cell.isMine) return endGame(false);
 
@@ -423,9 +430,7 @@
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) {
-                    const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
-                    board[r][c].grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
-                    board[r][c].grass.classList.add('popped');
+                    if (board[r][c].grass.parentNode) popOff(board[r][c].grass);
                     board[r][c].content.innerText = '💣';
                 }
             }
