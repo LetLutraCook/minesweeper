@@ -93,31 +93,31 @@
         .dirt.light { background-color: var(--revealed-bg); }
         .dirt.dark { background-color: var(--revealed-alt); }
 
+        /* Thick inner borders with connected corners */
         .adj-border {
             position: absolute;
             z-index: 4;
             background-color: var(--grass-border);
             pointer-events: none;
         }
-        /* Corners connect by overshooting slightly or matching width exactly */
-        .adj-top { top: 0; left: 0; width: 100%; height: 3px; }
-        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 3px; }
-        .adj-left { left: 0; top: 0; height: 100%; width: 3px; }
-        .adj-right { right: 0; top: 0; height: 100%; width: 3px; }
+        .adj-top { top: 0; left: 0; width: 100%; height: 4.5px; }
+        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 4.5px; }
+        .adj-left { left: 0; top: 0; height: 100%; width: 4.5px; }
+        .adj-right { right: 0; top: 0; height: 100%; width: 4.5px; }
 
         .grass {
             position: absolute;
             width: 100%;
             height: 100%;
             z-index: 5;
-            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            /* Slower transition */
+            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
             transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
         .popped {
-            /* Fading removed per instruction */
             pointer-events: none;
         }
 
@@ -160,7 +160,7 @@
             border: none;
         }
 
-        /* Buttons positioned directly adjacent to selection */
+        /* Adjusted positions to be directly touching the selection */
         #btn-dig { top: calc(var(--cell-size) * -1); left: 0; }
         #btn-flag { top: 0; left: calc(var(--cell-size) * -1); }
 
@@ -354,11 +354,12 @@
     }
 
     function popOff(grass) {
-        const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
-        grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
+        // Random rotation between 20 and 50 degrees
+        const rotVal = (Math.random() * 30 + 20);
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        grass.style.transform = `scale(0) rotate(${rotVal * direction}deg) translateY(60px)`;
         grass.classList.add('popped');
-        // Completely remove element after animation to ensure no "ghost" opacity is left
-        setTimeout(() => grass.remove(), 800);
+        setTimeout(() => grass.remove(), 1200);
     }
 
     function dig(r, c) {
