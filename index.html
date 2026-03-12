@@ -10,7 +10,8 @@
             --bg-alt: #a2d149;
             --revealed-bg: #e5c29f;
             --revealed-alt: #d7b899;
-            --border-dark: #4a752c;
+            --header-bg: #4a752c;
+            --field-border: #578a34;
             --btn-green: #578a34;
             --grass-border: #87af3a;
             --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10));
@@ -30,7 +31,7 @@
             width: 100%;
             height: 100%;
             margin: 0;
-            background-color: var(--border-dark);
+            background-color: var(--field-border);
             font-family: sans-serif;
             display: flex;
             flex-direction: column;
@@ -41,9 +42,10 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            background-color: var(--border-dark);
+            background-color: var(--header-bg);
             color: white;
             font-weight: bold;
+            z-index: 20;
         }
 
         #game-container {
@@ -52,11 +54,12 @@
             justify-content: center;
             align-items: center;
             padding: 10px;
+            background-color: var(--field-border);
         }
 
         #grid-border {
-            padding: 8px;
-            background-color: var(--border-dark);
+            padding: 12px;
+            background-color: var(--field-border);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -67,6 +70,7 @@
             grid-template-columns: repeat(19, var(--cell-size));
             grid-template-rows: repeat(10, var(--cell-size));
             position: relative;
+            background-color: var(--field-border);
         }
 
         .cell {
@@ -80,16 +84,6 @@
             font-size: calc(var(--cell-size) * 0.6);
         }
 
-        /* Border between grass and dirt */
-        .cell::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border: 1px solid var(--grass-border);
-            z-index: 4;
-            pointer-events: none;
-        }
-
         .dirt {
             position: absolute;
             width: 100%;
@@ -99,38 +93,46 @@
         .dirt.light { background-color: var(--revealed-bg); }
         .dirt.dark { background-color: var(--revealed-alt); }
 
+        /* The dynamic border logic */
+        .adj-border {
+            position: absolute;
+            z-index: 4;
+            background-color: var(--grass-border);
+            pointer-events: none;
+        }
+        .adj-top { top: 0; left: 0; width: 100%; height: 2px; }
+        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 2px; }
+        .adj-left { left: 0; top: 0; height: 100%; width: 2px; }
+        .adj-right { right: 0; top: 0; height: 100%; width: 2px; }
+
         .grass {
             position: absolute;
             width: 100%;
             height: 100%;
             z-index: 5;
-            transition: transform 0.6s cubic-bezier(0.1, 0.5, 0.5, 1), opacity 0.5s;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s;
             transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
-        /* Pop off animation logic */
         .popped {
             opacity: 0;
             pointer-events: none;
-            /* Rotation is set dynamically via JS */
         }
 
-        .cell.selected {
-            z-index: 10;
-        }
+        .cell.selected { z-index: 15; }
         .cell.selected::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             border: 4px solid var(--btn-green);
-            z-index: 11;
+            z-index: 16;
             pointer-events: none;
         }
 
         .content { z-index: 2; pointer-events: none; }
-        .flagged-icon { position: absolute; z-index: 6; pointer-events: none; font-size: 0.7em; }
+        .flagged-icon { position: absolute; z-index: 10; pointer-events: none; font-size: 0.7em; }
 
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; }
@@ -166,7 +168,7 @@
             background: var(--bg-color);
             border: none;
             border-radius: 4px;
-            color: var(--border-dark);
+            color: var(--header-bg);
             font-weight: bold;
             cursor: pointer;
         }
@@ -238,7 +240,8 @@
                 
                 board[r][c] = { 
                     r, c, isMine: false, revealed: false, flagged: false, 
-                    neighborCount: 0, el: container, grass, content, flagEl: null
+                    neighborCount: 0, el: container, grass, content, flagEl: null,
+                    borders: { top: null, bottom: null, left: null, right: null }
                 };
                 gridEl.appendChild(container);
             }
@@ -262,6 +265,51 @@
             }
         }
         minesGenerated = true;
+    }
+
+    function updateBorders() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = board[r][c];
+                if (!cell.revealed) {
+                    clearCellBorders(cell);
+                    continue;
+                }
+                
+                const directions = [
+                    { dr: -1, dc: 0, key: 'top', class: 'adj-top' },
+                    { dr: 1, dc: 0, key: 'bottom', class: 'adj-bottom' },
+                    { dr: 0, dc: -1, key: 'left', class: 'adj-left' },
+                    { dr: 0, dc: 1, key: 'right', class: 'adj-right' }
+                ];
+
+                directions.forEach(d => {
+                    let nr = r + d.dr, nc = c + d.dc;
+                    const isBorderingGrass = (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) && !board[nr][nc].revealed;
+                    
+                    if (isBorderingGrass) {
+                        if (!cell.borders[d.key]) {
+                            const b = document.createElement('div');
+                            b.className = `adj-border ${d.class}`;
+                            cell.el.appendChild(b);
+                            cell.borders[d.key] = b;
+                        }
+                    } else if (cell.borders[d.key]) {
+                        cell.borders[d.key].remove();
+                        cell.borders[d.key] = null;
+                    }
+                });
+            }
+        }
+    }
+
+    function clearCellBorders(cell) {
+        Object.keys(cell.borders).forEach(k => {
+            if (cell.borders[k]) {
+                cell.borders[k].remove();
+                cell.borders[k] = null;
+            }
+        });
     }
 
     function handleTap(e, r, c) {
@@ -304,19 +352,14 @@
         menuEl.style.display = 'none';
     }
 
-    function popOff(grass) {
-        const randomRot = (Math.random() * 90) + 45; // Slow rotation 45-135 deg
-        const direction = Math.random() > 0.5 ? 1 : -1;
-        grass.style.transform = `scale(0) rotate(${randomRot * direction}deg) translateY(20px)`;
-        grass.classList.add('popped');
-    }
-
     function dig(r, c) {
         const cell = board[r][c];
         if (cell.revealed || cell.flagged || gameOver) return;
         
         cell.revealed = true;
-        popOff(cell.grass);
+        const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
+        cell.grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
+        cell.grass.classList.add('popped');
 
         if (cell.isMine) return endGame(false);
 
@@ -326,6 +369,7 @@
         } else {
             iterate(r, c, (nr, nc) => dig(nr, nc));
         }
+        updateBorders();
         checkWin();
     }
 
@@ -379,11 +423,14 @@
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) {
-                    popOff(board[r][c].grass);
+                    const rot = (Math.random() * 60 + 30) * (Math.random() > 0.5 ? 1 : -1);
+                    board[r][c].grass.style.transform = `scale(0) rotate(${rot}deg) translateY(40px)`;
+                    board[r][c].grass.classList.add('popped');
                     board[r][c].content.innerText = '💣';
                 }
             }
         }
+        updateBorders();
     }
 
     document.getElementById('btn-dig').onpointerup = (e) => {
