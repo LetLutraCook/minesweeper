@@ -6,153 +6,148 @@
     <title>minesweeper</title>
     <style>
         :root {
-            --bg-color: #aad751;
-            --bg-alt: #a2d149;
-            --revealed-bg: #e5c29f;
-            --revealed-alt: #d7b899;
-            --header-bg: #4a752c;
-            --field-border: #578a34;
-            --btn-green: #578a34;
-            --grass-border: #87af3a;
-            --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10));
-            --border-thick: 5px;
+            --bg-color: #aad751; [cite: 1]
+            --bg-alt: #a2d149; [cite: 2]
+            --revealed-bg: #e5c29f; [cite: 1]
+            --revealed-alt: #d7b899; [cite: 2]
+            --header-bg: #4a752c; [cite: 1]
+            --field-border: #578a34; [cite: 1]
+            --btn-green: #578a34; [cite: 2]
+            --grass-border: #87af3a; [cite: 2]
+            --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10)); [cite: 3]
+            --border-thick: 5px; [cite: 3]
         }
 
         * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none !important; 
-            user-select: none;
+            box-sizing: border-box; [cite: 4]
+            -webkit-tap-highlight-color: transparent; [cite: 5]
+            touch-action: none !important; [cite: 5]
+            user-select: none; [cite: 5]
         }
 
         body, html {
-            position: fixed;
-            overflow: hidden;
-            width: 100%; height: 100%;
-            margin: 0;
-            background-color: var(--field-border);
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
+            position: fixed; [cite: 5]
+            overflow: hidden; [cite: 6]
+            width: 100%; height: 100%; [cite: 6]
+            margin: 0; [cite: 6]
+            background-color: var(--field-border); [cite: 6]
+            font-family: sans-serif; [cite: 6]
+            display: flex; [cite: 6]
+            flex-direction: column; [cite: 6]
         }
 
         #header {
-            height: 60px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background-color: var(--header-bg);
-            color: white;
-            font-weight: bold;
-            z-index: 50;
+            height: 60px; [cite: 7]
+            display: flex; [cite: 8]
+            justify-content: space-around; [cite: 8]
+            align-items: center; [cite: 8]
+            background-color: var(--header-bg); [cite: 8]
+            color: white; [cite: 8]
+            font-weight: bold; [cite: 8]
+            z-index: 50; [cite: 8]
         }
 
         #game-container {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--field-border);
+            flex-grow: 1; [cite: 9]
+            display: flex; [cite: 10]
+            justify-content: center; [cite: 10]
+            align-items: center; [cite: 10]
+            background-color: var(--field-border); [cite: 10]
+            position: relative;
         }
 
         #grid {
-            display: grid;
-            grid-template-columns: repeat(19, var(--cell-size));
-            grid-template-rows: repeat(10, var(--cell-size));
-            position: relative;
-            /* Border for the whole minefield */
-            border: 8px solid var(--field-border);
+            display: grid; [cite: 10]
+            grid-template-columns: repeat(19, var(--cell-size)); [cite: 11]
+            grid-template-rows: repeat(10, var(--cell-size)); [cite: 11]
+            position: relative; [cite: 11]
+            border: 8px solid var(--field-border); [cite: 11]
         }
 
         .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
-            position: relative;
+            width: var(--cell-size); [cite: 12]
+            height: var(--cell-size); [cite: 13]
+            position: relative; [cite: 13]
         }
 
         .dirt {
-            position: absolute;
-            width: 100%; height: 100%;
-            z-index: 1;
+            position: absolute; [cite: 13]
+            width: 100%; height: 100%; [cite: 14]
+            z-index: 1; [cite: 14]
         }
-        .dirt.light { background-color: var(--revealed-bg); }
-        .dirt.dark { background-color: var(--revealed-alt); }
+        .dirt.light { background-color: var(--revealed-bg); [cite: 14] }
+        .dirt.dark { background-color: var(--revealed-alt); [cite: 15] }
 
-        /* The connected border logic */
         .border-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5;
-            pointer-events: none;
-            border-style: solid;
-            border-width: 0;
-            border-color: var(--grass-border);
+            position: absolute; [cite: 16]
+            top: 0; left: 0; width: 100%; height: 100%; [cite: 17]
+            z-index: 5; [cite: 17]
+            pointer-events: none; [cite: 17]
+            border-style: solid; [cite: 17]
+            border-width: 0; [cite: 17]
+            border-color: var(--grass-border); [cite: 17]
         }
 
         .grass {
-            position: absolute;
-            width: 100%; height: 100%;
-            z-index: 10;
-            transition: transform 2.5s ease-out; /* Very slow */
-            transform-origin: center;
+            position: absolute; [cite: 18]
+            width: 100%; height: 100%; [cite: 19]
+            z-index: 10; [cite: 19]
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+            transform-origin: center; [cite: 20]
         }
-        .grass.light { background-color: var(--bg-color); }
-        .grass.dark { background-color: var(--bg-alt); }
-
-        /* Tiny 0.3 tile fall & shrink */
-        .popped {
-            transform: scale(0) translateY(calc(var(--cell-size) * 0.3)) rotate(35deg) !important;
-            pointer-events: none;
-        }
+        .grass.light { background-color: var(--bg-color); [cite: 21] }
+        .grass.dark { background-color: var(--bg-alt); [cite: 22] }
 
         .cell.selected::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border: 4px solid var(--btn-green);
-            z-index: 40;
-            pointer-events: none;
+            content: ''; [cite: 24]
+            position: absolute; [cite: 25]
+            top: 0; left: 0; right: 0; bottom: 0; [cite: 25]
+            border: 4px solid var(--btn-green); [cite: 25]
+            z-index: 40; [cite: 25]
+            pointer-events: none; [cite: 25]
         }
 
         .content { 
-            position: absolute; z-index: 2; 
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%;
-            font-weight: 900; font-size: calc(var(--cell-size) * 0.6);
+            position: absolute; [cite: 26]
+            z-index: 2; [cite: 27] 
+            display: flex; align-items: center; justify-content: center; [cite: 27]
+            width: 100%; height: 100%; [cite: 27]
+            font-weight: 900; font-size: calc(var(--cell-size) * 0.6); [cite: 27]
         }
 
-        .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
-        .n4 { color: #7b1fa2; }
+        .n1 { color: #1976d2; } .n2 { color: #388e3c; [cite: 28] } 
+        .n3 { color: #d32f2f; } [cite: 29] .n4 { color: #7b1fa2; [cite: 29] }
 
-        /* FIXED BUTTON POSITIONS */
         #action-menu {
-            position: absolute;
-            display: none;
-            z-index: 100;
-            pointer-events: none;
-            width: var(--cell-size);
-            height: var(--cell-size);
+            position: absolute; [cite: 30]
+            display: none; [cite: 31]
+            z-index: 100; [cite: 31]
+            pointer-events: none; [cite: 31]
+            width: var(--cell-size); [cite: 31]
+            height: var(--cell-size); [cite: 31]
+            top: 0;
+            left: 0;
         }
 
         .menu-btn {
-            position: absolute;
-            width: var(--cell-size);
-            height: var(--cell-size);
-            background: var(--btn-green);
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%;
-            pointer-events: auto;
-            font-size: calc(var(--cell-size) * 0.6);
+            position: absolute; [cite: 32]
+            width: var(--cell-size); [cite: 33]
+            height: var(--cell-size); [cite: 33]
+            background: var(--btn-green); [cite: 33]
+            display: flex; align-items: center; justify-content: center; [cite: 33]
+            border-radius: 50%; [cite: 33]
+            pointer-events: auto; [cite: 33]
+            font-size: calc(var(--cell-size) * 0.6); [cite: 33]
         }
 
-        /* Direct adjacency */
-        #btn-dig { bottom: 100%; left: 0; }  /* Directly Above */
-        #btn-flag { top: 0; right: 100%; }   /* Directly Left */
+        #btn-dig { bottom: 110%; left: 0; }
+        #btn-flag { top: 0; right: 110%; }
 
         #restart-btn {
-            padding: 8px 16px; background: var(--bg-color);
-            border: none; border-radius: 4px;
-            color: var(--header-bg); font-weight: bold;
+            padding: 8px 16px; [cite: 36]
+            background: var(--bg-color); [cite: 37]
+            border: none; border-radius: 4px; [cite: 37]
+            color: var(--header-bg); font-weight: bold; [cite: 37]
         }
     </style>
 </head>
@@ -160,192 +155,196 @@
 
     <div id="header">
         <span id="msg">minesweeper</span>
-        <button id="restart-btn" onclick="initGame()">RESTART</button>
+        <button id="restart-btn" onclick="initGame()">RESTART</button> [cite: 38]
     </div>
     
     <div id="game-container">
-        <div id="grid"></div>
+        <div id="grid"></div> [cite: 38]
         <div id="action-menu">
-            <div id="btn-dig" class="menu-btn">⛏️</div>
-            <div id="btn-flag" class="menu-btn">🚩</div>
+            <div id="btn-dig" class="menu-btn">挖</div> [cite: 38]
+            <div id="btn-flag" class="menu-btn">旗</div> [cite: 38]
         </div>
     </div>
 
 <script>
-    const ROWS = 10, COLS = 19, MINES = 35;
-    let board = [], gameOver = false, minesGenerated = false, selectedCell = null, lastTap = 0;
+    const ROWS = 10, COLS = 19, MINES = 35; [cite: 39]
+    let board = [], gameOver = false, minesGenerated = false, selectedCell = null, lastTap = 0; [cite: 40]
 
-    const gridEl = document.getElementById('grid');
-    const menuEl = document.getElementById('action-menu');
+    const gridEl = document.getElementById('grid'); [cite: 40]
+    const menuEl = document.getElementById('action-menu'); [cite: 41]
 
     function initGame() {
-        board = []; gameOver = false; minesGenerated = false;
-        gridEl.innerHTML = ''; menuEl.style.display = 'none'; selectedCell = null;
-        document.getElementById('msg').innerText = "minesweeper";
-        
-        for (let r = 0; r < ROWS; r++) {
-            board[r] = [];
-            for (let c = 0; c < COLS; c++) {
-                const container = document.createElement('div');
-                container.classList.add('cell');
+        board = []; gameOver = false; [cite: 41]
+        minesGenerated = false; [cite: 42]
+        gridEl.innerHTML = ''; menuEl.style.display = 'none'; selectedCell = null; [cite: 42]
+        document.getElementById('msg').innerText = "minesweeper"; [cite: 42]
+        for (let r = 0; r < ROWS; r++) { [cite: 43]
+            board[r] = []; [cite: 43]
+            for (let c = 0; c < COLS; c++) { [cite: 44]
+                const container = document.createElement('div'); [cite: 44]
+                container.classList.add('cell'); [cite: 45]
                 
-                const dirt = document.createElement('div');
-                dirt.classList.add('dirt', (r+c)%2===0 ? 'light' : 'dark');
+                const dirt = document.createElement('div'); [cite: 45]
+                dirt.classList.add('dirt', (r+c)%2===0 ? 'light' : 'dark'); [cite: 45]
                 
-                const borderLayer = document.createElement('div');
-                borderLayer.classList.add('border-layer');
+                const borderLayer = document.createElement('div'); [cite: 45]
+                borderLayer.classList.add('border-layer'); [cite: 45]
 
-                const grass = document.createElement('div');
-                grass.classList.add('grass', (r+c)%2===0 ? 'light' : 'dark');
+                const grass = document.createElement('div'); [cite: 45]
+                grass.classList.add('grass', (r+c)%2===0 ? 'light' : 'dark'); [cite: 46]
                 
-                const content = document.createElement('div');
-                content.classList.add('content');
+                const content = document.createElement('div'); [cite: 46]
+                content.classList.add('content'); [cite: 46]
 
-                container.append(dirt, borderLayer, grass, content);
-                container.addEventListener('pointerup', (e) => handleTap(e, r, c));
+                container.append(dirt, borderLayer, grass, content); [cite: 46]
+                container.addEventListener('pointerup', (e) => handleTap(e, r, c)); [cite: 47]
                 
                 board[r][c] = { r, c, isMine: false, revealed: false, flagged: false, 
-                                neighborCount: 0, el: container, grass, borderLayer, content };
-                gridEl.appendChild(container);
+                                neighborCount: 0, el: container, grass, borderLayer, content }; [cite: 47]
+                gridEl.appendChild(container); [cite: 48]
             }
         }
     }
 
     function handleTap(e, r, c) {
-        if (gameOver) return;
-        const cell = board[r][c];
-        const now = Date.now();
+        if (gameOver) return; [cite: 48]
+        const cell = board[r][c]; [cite: 49]
+        const now = Date.now(); [cite: 49]
 
-        if (now - lastTap < 300 && cell.revealed) { handleChord(r, c); return; }
-        lastTap = now;
+        if (now - lastTap < 300 && cell.revealed) { handleChord(r, c); return; [cite: 49] }
+        lastTap = now; [cite: 50]
 
-        if (!minesGenerated) { generateMines(r, c); dig(r, c); return; }
-        if (cell.flagged) { toggleFlag(r, c); clearSelection(); return; }
-        if (cell.revealed) return;
+        if (!minesGenerated) { generateMines(r, c); dig(r, c); return; [cite: 50] }
+        if (cell.flagged) { toggleFlag(r, c); clearSelection(); return; [cite: 51] }
+        if (cell.revealed) return; [cite: 52]
 
-        if (selectedCell) selectedCell.el.classList.remove('selected');
-        selectedCell = cell;
-        cell.el.classList.add('selected');
-
-        menuEl.style.display = 'block';
-        menuEl.style.transform = `translate(${c * 100}%, ${r * 100}%)`;
+        if (selectedCell) selectedCell.el.classList.remove('selected'); [cite: 52]
+        selectedCell = cell; [cite: 52]
+        cell.el.classList.add('selected'); [cite: 52]
+        
+        // Fix: Use offsetTop/Left to anchor the menu relative to the grid container
+        menuEl.style.display = 'block'; [cite: 53]
+        menuEl.style.top = `${cell.el.offsetTop}px`;
+        menuEl.style.left = `${cell.el.offsetLeft}px`;
     }
 
     function updateBorders() {
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const cell = board[r][c];
-                if (!cell.revealed) {
-                    cell.borderLayer.style.borderWidth = '0';
-                    continue;
+        for (let r = 0; r < ROWS; r++) { [cite: 54]
+            for (let c = 0; c < COLS; c++) { [cite: 54]
+                const cell = board[r][c]; [cite: 54]
+                if (!cell.revealed) { [cite: 55]
+                    cell.borderLayer.style.borderWidth = '0'; [cite: 55]
+                    continue; [cite: 56]
                 }
-                // Check neighbors to apply borders
-                const t = (r > 0 && !board[r-1][c].revealed) ? 'var(--border-thick)' : '0';
-                const b = (r < ROWS-1 && !board[r+1][c].revealed) ? 'var(--border-thick)' : '0';
-                const l = (c > 0 && !board[r][c-1].revealed) ? 'var(--border-thick)' : '0';
-                const r_edge = (c < COLS-1 && !board[r][c+1].revealed) ? 'var(--border-thick)' : '0';
+                const t = (r > 0 && !board[r-1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 56]
+                const b = (r < ROWS-1 && !board[r+1][c].revealed) ? 'var(--border-thick)' : '0'; [cite: 57]
+                const l = (c > 0 && !board[r][c-1].revealed) ? 'var(--border-thick)' : '0'; [cite: 58]
+                const r_edge = (c < COLS-1 && !board[r][c+1].revealed) ? 'var(--border-thick)' : '0'; [cite: 59]
                 
-                cell.borderLayer.style.borderWidth = `${t} ${r_edge} ${b} ${l}`;
+                cell.borderLayer.style.borderWidth = `${t} ${r_edge} ${b} ${l}`; [cite: 59]
             }
         }
     }
 
     function dig(r, c) {
-        const cell = board[r][c];
-        if (cell.revealed || cell.flagged || gameOver) return;
-        cell.revealed = true;
-        
-        // Grass "falling" away slightly
-        cell.grass.classList.add('popped');
+        const cell = board[r][c]; [cite: 60]
+        if (cell.revealed || cell.flagged || gameOver) return; [cite: 61]
+        cell.revealed = true; [cite: 61]
 
-        if (cell.isMine) return endGame(false);
+        // Randomized fall animation logic
+        const randomRot = Math.floor(Math.random() * 60) - 30; // -30 to +30 degrees
+        const randomX = (Math.random() - 0.5) * 30; // Slight horizontal drift
+        cell.grass.style.transform = `translate(${randomX}px, calc(var(--cell-size) * 1.5)) rotate(${randomRot}deg) scale(0.2)`;
+        cell.grass.style.opacity = "0";
 
-        if (cell.neighborCount > 0) {
-            cell.content.innerText = cell.neighborCount;
-            cell.content.classList.add('n' + cell.neighborCount);
+        if (cell.isMine) return endGame(false); [cite: 62]
+        if (cell.neighborCount > 0) { [cite: 63]
+            cell.content.innerText = cell.neighborCount; [cite: 63]
+            cell.content.classList.add('n' + cell.neighborCount); [cite: 64]
         } else {
-            iterate(r, c, (nr, nc) => dig(nr, nc));
+            iterate(r, c, (nr, nc) => dig(nr, nc)); [cite: 64]
         }
-        updateBorders();
-        checkWin();
+        updateBorders(); [cite: 65]
+        checkWin(); [cite: 65]
     }
 
     function toggleFlag(r, c) {
-        const cell = board[r][c];
-        if (cell.revealed) return;
-        cell.flagged = !cell.flagged;
-        cell.content.innerText = cell.flagged ? '🚩' : '';
+        const cell = board[r][c]; [cite: 66]
+        if (cell.revealed) return; [cite: 67]
+        cell.flagged = !cell.flagged; [cite: 67]
+        cell.content.innerText = cell.flagged ? '旗' : ''; [cite: 67]
     }
 
     function generateMines(sr, sc) {
-        let p = 0;
-        while (p < MINES) {
-            let r = Math.floor(Math.random() * ROWS), c = Math.floor(Math.random() * COLS);
-            if (!board[r][c].isMine && (Math.abs(r-sr)>1 || Math.abs(c-sc)>1)) {
-                board[r][c].isMine = true; p++;
+        let p = 0; [cite: 68]
+        while (p < MINES) { [cite: 69]
+            let r = Math.floor(Math.random() * ROWS), c = Math.floor(Math.random() * COLS); [cite: 69]
+            if (!board[r][c].isMine && (Math.abs(r-sr)>1 || Math.abs(c-sc)>1)) { [cite: 70]
+                board[r][c].isMine = true; [cite: 70]
+                p++; [cite: 71]
             }
         }
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (board[r][c].isMine) continue;
-                let n = 0;
-                iterate(r, c, (nr, nc) => { if (board[nr][nc].isMine) n++; });
-                board[r][c].neighborCount = n;
+        for (let r = 0; r < ROWS; r++) { [cite: 71]
+            for (let c = 0; c < COLS; c++) { [cite: 71]
+                if (board[r][c].isMine) continue; [cite: 71]
+                let n = 0; [cite: 72]
+                iterate(r, c, (nr, nc) => { if (board[nr][nc].isMine) n++; }); [cite: 72]
+                board[r][c].neighborCount = n; [cite: 72]
             }
         }
-        minesGenerated = true;
+        minesGenerated = true; [cite: 73]
     }
 
     function clearSelection() {
-        if (selectedCell) selectedCell.el.classList.remove('selected');
-        selectedCell = null;
-        menuEl.style.display = 'none';
+        if (selectedCell) selectedCell.el.classList.remove('selected'); [cite: 74]
+        selectedCell = null; [cite: 74]
+        menuEl.style.display = 'none'; [cite: 75]
     }
 
     function iterate(r, c, cb) {
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                let nr = r + dr, nc = c + dc;
-                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc);
+        for (let dr = -1; dr <= 1; dr++) { [cite: 75]
+            for (let dc = -1; dc <= 1; dc++) { [cite: 75]
+                if (dr === 0 && dc === 0) continue; [cite: 75]
+                let nr = r + dr, nc = c + dc; [cite: 76]
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc); [cite: 77]
             }
         }
     }
 
     function checkWin() {
-        let rev = 0;
-        board.flat().forEach(c => { if(c.revealed) rev++; });
-        if (rev === (ROWS * COLS) - MINES) endGame(true);
+        let rev = 0; [cite: 78]
+        board.flat().forEach(c => { if(c.revealed) rev++; }); [cite: 79]
+        if (rev === (ROWS * COLS) - MINES) endGame(true); [cite: 79]
     }
 
     function endGame(won) {
-        gameOver = true;
-        clearSelection();
-        document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥";
+        gameOver = true; [cite: 80]
+        clearSelection(); [cite: 80]
+        document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥"; [cite: 81]
         board.flat().forEach(c => {
             if (c.isMine) {
-                c.grass.classList.add('popped');
+                const randomRot = Math.floor(Math.random() * 60) - 30;
+                c.grass.style.transform = `translateY(50px) rotate(${randomRot}deg) scale(0)`;
+                c.grass.style.opacity = "0";
                 c.content.innerText = '💣';
             }
         });
-        updateBorders();
+        updateBorders(); [cite: 82]
     }
 
     document.getElementById('btn-dig').onpointerup = (e) => {
-        e.stopPropagation();
-        if (selectedCell) { dig(selectedCell.r, selectedCell.c); clearSelection(); }
+        e.stopPropagation(); [cite: 82]
+        if (selectedCell) { dig(selectedCell.r, selectedCell.c); clearSelection(); } [cite: 83]
     };
-
     document.getElementById('btn-flag').onpointerup = (e) => {
-        e.stopPropagation();
-        if (selectedCell) { toggleFlag(selectedCell.r, selectedCell.c); clearSelection(); }
+        e.stopPropagation(); [cite: 84]
+        if (selectedCell) { toggleFlag(selectedCell.r, selectedCell.c); clearSelection(); [cite: 84] }
     };
 
     window.addEventListener('pointerdown', (e) => {
         if (!menuEl.contains(e.target) && !e.target.closest('.cell')) clearSelection();
     });
-
-    initGame();
+    initGame(); [cite: 86]
 </script>
 </body>
 </html>
