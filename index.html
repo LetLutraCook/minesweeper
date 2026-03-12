@@ -166,8 +166,8 @@
     <div id="game-container">
         <div id="grid"></div>
         <div id="action-menu">
-            <div id="btn-dig" class="menu-btn">âï¸</div>
-            <div id="btn-flag" class="menu-btn">ð©</div>
+            <div id="btn-dig" class="menu-btn">⛏️</div>
+            <div id="btn-flag" class="menu-btn">🚩</div>
         </div>
     </div>
 
@@ -274,7 +274,7 @@
         const cell = board[r][c];
         if (cell.revealed) return;
         cell.flagged = !cell.flagged;
-        cell.content.innerText = cell.flagged ? 'ð©' : '';
+        cell.content.innerText = cell.flagged ? '🚩' : '';
     }
 
     function generateMines(sr, sc) {
@@ -321,11 +321,11 @@
     function endGame(won) {
         gameOver = true;
         clearSelection();
-        document.getElementById('msg').innerText = won ? "WIN! ð" : "BOOM! ð¥";
+        document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥";
         board.flat().forEach(c => {
             if (c.isMine) {
                 c.grass.classList.add('popped');
-                c.content.innerText = 'ð£';
+                c.content.innerText = '💣';
             }
         });
         updateBorders();
