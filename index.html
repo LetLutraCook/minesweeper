@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Minesweeper Final</title>
+    <title>minesweeper</title>
     <style>
         :root {
             --bg-color: #aad751;
             --bg-alt: #a2d149;
             --revealed-bg: #e5c29f;
             --revealed-alt: #d7b899;
-            --cell-size: calc(min(100vw / 19, (100vh - 60px) / 10));
+            --border-color: #4a752c;
+            --cell-size: calc(min(90vw / 19, (80vh - 60px) / 10));
         }
 
-        /* THE ANTI-ZOOM NUCLEAR OPTION */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -28,8 +28,10 @@
             width: 100%;
             height: 100%;
             margin: 0;
-            background-color: #4a752c;
+            background-color: var(--border-color);
             font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
         }
 
         #header {
@@ -42,12 +44,20 @@
         }
 
         #game-container {
-            width: 100vw;
-            height: calc(100vh - 60px);
+            flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
+            padding: 20px;
+        }
+
+        #grid-border {
+            padding: 10px;
+            background-color: var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #grid {
@@ -68,7 +78,6 @@
             font-size: calc(var(--cell-size) * 0.6);
         }
 
-        /* The Dirt Layer (Underneath) */
         .dirt {
             position: absolute;
             width: 100%;
@@ -78,7 +87,6 @@
         .dirt.light { background-color: var(--revealed-bg); }
         .dirt.dark { background-color: var(--revealed-alt); }
 
-        /* The Grass Tile (Top Layer) */
         .grass {
             position: absolute;
             width: 100%;
@@ -89,7 +97,6 @@
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
-        /* "Pop-off" Animation */
         .popped {
             transform: scale(0);
             opacity: 0;
@@ -97,14 +104,12 @@
         }
 
         .content { z-index: 3; pointer-events: none; }
-
         .flagged::after { content: '🚩'; z-index: 4; font-size: 0.7em; }
         .mine::after { content: '💣'; z-index: 4; }
 
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; }
 
-        /* Strictly positioned menu */
         #action-menu {
             position: absolute;
             display: none;
@@ -123,24 +128,35 @@
             justify-content: center;
             box-shadow: 0 0 10px rgba(0,0,0,0.3);
             font-size: calc(var(--cell-size) * 0.6);
-            border: 2px solid #4a752c;
+            border: 2px solid var(--border-color);
             pointer-events: auto;
         }
 
-        /* Strict requested positions */
-        #btn-dig { top: calc(var(--cell-size) * -1); left: 0; } /* Exactly One Square Up */
-        #btn-flag { top: 0; left: calc(var(--cell-size) * -1); } /* Exactly One Square Left */
+        #btn-dig { top: calc(var(--cell-size) * -1); left: 0; }
+        #btn-flag { top: 0; left: calc(var(--cell-size) * -1); }
+
+        #restart-btn {
+            padding: 8px 16px;
+            background: #aad751;
+            border: none;
+            border-radius: 4px;
+            color: var(--border-color);
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <span id="msg">MINESWEEPER</span>
-        <button style="padding:5px 10px; background:#aad751; border:none; border-radius:4px;" onclick="initGame()">RESTART</button>
+        <span id="msg">minesweeper</span>
+        <button id="restart-btn" onclick="initGame()">RESTART</button>
     </div>
     
     <div id="game-container">
-        <div id="grid"></div>
+        <div id="grid-border">
+            <div id="grid"></div>
+        </div>
         <div id="action-menu">
             <div id="btn-dig" class="menu-btn">⛏️</div>
             <div id="btn-flag" class="menu-btn">🚩</div>
@@ -148,7 +164,6 @@
     </div>
 
 <script>
-    // Hard-preventing any zoom gestures at the script level
     document.addEventListener('gesturestart', e => e.preventDefault());
     document.addEventListener('dblclick', e => e.preventDefault());
 
@@ -171,7 +186,7 @@
         minesGenerated = false;
         gridEl.innerHTML = '';
         menuEl.style.display = 'none';
-        document.getElementById('msg').innerText = "MINESWEEPER";
+        document.getElementById('msg').innerText = "minesweeper";
         
         for (let r = 0; r < ROWS; r++) {
             board[r] = [];
@@ -225,7 +240,6 @@
         const cell = board[r][c];
         const now = Date.now();
 
-        // Chord logic
         if (now - lastTap < 300 && cell.revealed) {
             handleChord(r, c);
             return;
@@ -248,8 +262,9 @@
 
         selectedCell = cell;
         menuEl.style.display = 'block';
-        menuEl.style.top = (r * cell.el.offsetHeight) + 'px';
-        menuEl.style.left = (c * cell.el.offsetWidth) + 'px';
+        const rect = gridEl.getBoundingClientRect();
+        menuEl.style.top = (rect.top + (r * cell.el.offsetHeight)) + 'px';
+        menuEl.style.left = (rect.left + (c * cell.el.offsetWidth)) + 'px';
     }
 
     function dig(r, c) {
@@ -257,7 +272,6 @@
         if (cell.revealed || cell.flagged || gameOver) return;
         
         cell.revealed = true;
-        // The "Pop-off" effect
         cell.grass.classList.add('popped');
 
         if (cell.isMine) return endGame(false);
