@@ -10,7 +10,9 @@
             --bg-alt: #a2d149;
             --revealed-bg: #e5c29f;
             --revealed-alt: #d7b899;
-            --border-color: #4a752c;
+            --border-dark: #4a752c;
+            --btn-green: #578a34;
+            --grass-border: #87af3a;
             --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10));
         }
 
@@ -28,7 +30,7 @@
             width: 100%;
             height: 100%;
             margin: 0;
-            background-color: var(--border-color);
+            background-color: var(--border-dark);
             font-family: sans-serif;
             display: flex;
             flex-direction: column;
@@ -39,6 +41,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
+            background-color: var(--border-dark);
             color: white;
             font-weight: bold;
         }
@@ -53,8 +56,7 @@
 
         #grid-border {
             padding: 8px;
-            background-color: var(--border-color);
-            border-radius: 4px;
+            background-color: var(--border-dark);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -76,7 +78,16 @@
             justify-content: center;
             font-weight: 900;
             font-size: calc(var(--cell-size) * 0.6);
-            overflow: visible;
+        }
+
+        /* Border between grass and dirt */
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 1px solid var(--grass-border);
+            z-index: 4;
+            pointer-events: none;
         }
 
         .dirt {
@@ -93,27 +104,33 @@
             width: 100%;
             height: 100%;
             z-index: 5;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1), opacity 0.3s;
+            transition: transform 0.6s cubic-bezier(0.1, 0.5, 0.5, 1), opacity 0.5s;
             transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
+        /* Pop off animation logic */
         .popped {
-            transform: scale(0) translateY(20px);
             opacity: 0;
             pointer-events: none;
+            /* Rotation is set dynamically via JS */
         }
 
         .cell.selected {
-            outline: 3px solid white;
-            outline-offset: -3px;
             z-index: 10;
+        }
+        .cell.selected::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 4px solid var(--btn-green);
+            z-index: 11;
+            pointer-events: none;
         }
 
         .content { z-index: 2; pointer-events: none; }
         .flagged-icon { position: absolute; z-index: 6; pointer-events: none; font-size: 0.7em; }
-        .mine-icon { z-index: 3; pointer-events: none; }
 
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; }
@@ -131,15 +148,14 @@
             position: absolute;
             width: var(--cell-size);
             height: var(--cell-size);
-            background: var(--bg-color);
+            background: var(--btn-green);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             font-size: calc(var(--cell-size) * 0.6);
             border-radius: 50%;
-            border: 2px solid white;
             pointer-events: auto;
+            border: none;
         }
 
         #btn-dig { top: calc(var(--cell-size) * -1.2); left: 0; }
@@ -150,7 +166,7 @@
             background: var(--bg-color);
             border: none;
             border-radius: 4px;
-            color: var(--border-color);
+            color: var(--border-dark);
             font-weight: bold;
             cursor: pointer;
         }
@@ -221,15 +237,8 @@
                 container.addEventListener('pointerup', (e) => handleTap(e, r, c));
                 
                 board[r][c] = { 
-                    r, c, 
-                    isMine: false, 
-                    revealed: false, 
-                    flagged: false, 
-                    neighborCount: 0, 
-                    el: container, 
-                    grass, 
-                    content,
-                    flagEl: null
+                    r, c, isMine: false, revealed: false, flagged: false, 
+                    neighborCount: 0, el: container, grass, content, flagEl: null
                 };
                 gridEl.appendChild(container);
             }
@@ -285,7 +294,6 @@
         cell.el.classList.add('selected');
 
         menuEl.style.display = 'block';
-        const rect = gridEl.getBoundingClientRect();
         menuEl.style.top = (r * cell.el.offsetHeight) + 'px';
         menuEl.style.left = (c * cell.el.offsetWidth) + 'px';
     }
@@ -296,12 +304,19 @@
         menuEl.style.display = 'none';
     }
 
+    function popOff(grass) {
+        const randomRot = (Math.random() * 90) + 45; // Slow rotation 45-135 deg
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        grass.style.transform = `scale(0) rotate(${randomRot * direction}deg) translateY(20px)`;
+        grass.classList.add('popped');
+    }
+
     function dig(r, c) {
         const cell = board[r][c];
         if (cell.revealed || cell.flagged || gameOver) return;
         
         cell.revealed = true;
-        cell.grass.classList.add('popped');
+        popOff(cell.grass);
 
         if (cell.isMine) return endGame(false);
 
@@ -364,9 +379,8 @@
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) {
-                    board[r][c].grass.classList.add('popped');
+                    popOff(board[r][c].grass);
                     board[r][c].content.innerText = '💣';
-                    board[r][c].content.classList.add('mine-icon');
                 }
             }
         }
