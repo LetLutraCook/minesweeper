@@ -54,7 +54,6 @@
             justify-content: center;
             align-items: center;
             padding: 10px;
-            background-color: var(--field-border);
         }
 
         #grid-border {
@@ -70,7 +69,6 @@
             grid-template-columns: repeat(19, var(--cell-size));
             grid-template-rows: repeat(10, var(--cell-size));
             position: relative;
-            background-color: var(--field-border);
         }
 
         .cell {
@@ -93,25 +91,21 @@
         .dirt.light { background-color: var(--revealed-bg); }
         .dirt.dark { background-color: var(--revealed-alt); }
 
-        /* Thick inner borders with connected corners */
-        .adj-border {
+        /* Use Box Shadow for borders to ensure corner connection */
+        .inner-border-overlay {
             position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 4;
-            background-color: var(--grass-border);
             pointer-events: none;
         }
-        .adj-top { top: 0; left: 0; width: 100%; height: 4.5px; }
-        .adj-bottom { bottom: 0; left: 0; width: 100%; height: 4.5px; }
-        .adj-left { left: 0; top: 0; height: 100%; width: 4.5px; }
-        .adj-right { right: 0; top: 0; height: 100%; width: 4.5px; }
 
         .grass {
             position: absolute;
             width: 100%;
             height: 100%;
-            z-index: 5;
-            /* Slower transition */
-            transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 10;
+            /* Slowing down the fall further */
+            transition: transform 1.8s cubic-bezier(0.3, 0, 0.7, 1);
             transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
@@ -121,18 +115,18 @@
             pointer-events: none;
         }
 
-        .cell.selected { z-index: 15; }
+        .cell.selected { z-index: 30; }
         .cell.selected::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             border: 4px solid var(--btn-green);
-            z-index: 16;
+            z-index: 31;
             pointer-events: none;
         }
 
         .content { z-index: 2; pointer-events: none; }
-        .flagged-icon { position: absolute; z-index: 10; pointer-events: none; font-size: 0.7em; }
+        .flagged-icon { position: absolute; z-index: 15; pointer-events: none; font-size: 0.7em; }
 
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; }
@@ -160,7 +154,7 @@
             border: none;
         }
 
-        /* Adjusted positions to be directly touching the selection */
+        /* Positions locked exactly to adjacent tiles */
         #btn-dig { top: calc(var(--cell-size) * -1); left: 0; }
         #btn-flag { top: 0; left: calc(var(--cell-size) * -1); }
 
@@ -230,10 +224,14 @@
                 const grass = document.createElement('div');
                 grass.classList.add('grass', (r+c)%2===0 ? 'light' : 'dark');
                 
+                const overlay = document.createElement('div');
+                overlay.classList.add('inner-border-overlay');
+                
                 const content = document.createElement('div');
                 content.classList.add('content');
 
                 container.appendChild(dirt);
+                container.appendChild(overlay);
                 container.appendChild(grass);
                 container.appendChild(content);
 
@@ -241,8 +239,7 @@
                 
                 board[r][c] = { 
                     r, c, isMine: false, revealed: false, flagged: false, 
-                    neighborCount: 0, el: container, grass, content, flagEl: null,
-                    borders: { top: null, bottom: null, left: null, right: null }
+                    neighborCount: 0, el: container, grass, overlay, content, flagEl: null
                 };
                 gridEl.appendChild(container);
             }
@@ -269,48 +266,29 @@
     }
 
     function updateBorders() {
+        const bWidth = "5px";
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const cell = board[r][c];
                 if (!cell.revealed) {
-                    clearCellBorders(cell);
+                    cell.overlay.style.boxShadow = "none";
                     continue;
                 }
-                
-                const directions = [
-                    { dr: -1, dc: 0, key: 'top', class: 'adj-top' },
-                    { dr: 1, dc: 0, key: 'bottom', class: 'adj-bottom' },
-                    { dr: 0, dc: -1, key: 'left', class: 'adj-left' },
-                    { dr: 0, dc: 1, key: 'right', class: 'adj-right' }
-                ];
 
-                directions.forEach(d => {
-                    let nr = r + d.dr, nc = c + d.dc;
-                    const isBorderingGrass = (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) && !board[nr][nc].revealed;
-                    
-                    if (isBorderingGrass) {
-                        if (!cell.borders[d.key]) {
-                            const b = document.createElement('div');
-                            b.className = `adj-border ${d.class}`;
-                            cell.el.appendChild(b);
-                            cell.borders[d.key] = b;
-                        }
-                    } else if (cell.borders[d.key]) {
-                        cell.borders[d.key].remove();
-                        cell.borders[d.key] = null;
-                    }
-                });
+                let shadows = [];
+                // Check neighbors: if neighbor is grass, add border on that side
+                // Top
+                if (r > 0 && !board[r-1][c].revealed) shadows.push(`inset 0 ${bWidth} 0 0 var(--grass-border)`);
+                // Bottom
+                if (r < ROWS - 1 && !board[r+1][c].revealed) shadows.push(`inset 0 -${bWidth} 0 0 var(--grass-border)`);
+                // Left
+                if (c > 0 && !board[r][c-1].revealed) shadows.push(`inset ${bWidth} 0 0 0 var(--grass-border)`);
+                // Right
+                if (c < COLS - 1 && !board[r][c+1].revealed) shadows.push(`inset -${bWidth} 0 0 0 var(--grass-border)`);
+
+                cell.overlay.style.boxShadow = shadows.length ? shadows.join(",") : "none";
             }
         }
-    }
-
-    function clearCellBorders(cell) {
-        Object.keys(cell.borders).forEach(k => {
-            if (cell.borders[k]) {
-                cell.borders[k].remove();
-                cell.borders[k] = null;
-            }
-        });
     }
 
     function handleTap(e, r, c) {
@@ -354,12 +332,12 @@
     }
 
     function popOff(grass) {
-        // Random rotation between 20 and 50 degrees
         const rotVal = (Math.random() * 30 + 20);
         const direction = Math.random() > 0.5 ? 1 : -1;
-        grass.style.transform = `scale(0) rotate(${rotVal * direction}deg) translateY(60px)`;
+        // Deep translateY and slower transition for heavy feel
+        grass.style.transform = `scale(0) rotate(${rotVal * direction}deg) translateY(150px)`;
         grass.classList.add('popped');
-        setTimeout(() => grass.remove(), 1200);
+        setTimeout(() => grass.remove(), 2000);
     }
 
     function dig(r, c) {
@@ -431,7 +409,7 @@
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) {
-                    if (board[r][c].grass.parentNode) popOff(board[r][c].grass);
+                    if (board[r][c].grass && board[r][c].grass.parentNode) popOff(board[r][c].grass);
                     board[r][c].content.innerText = '💣';
                 }
             }
