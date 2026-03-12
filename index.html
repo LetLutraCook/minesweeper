@@ -11,7 +11,7 @@
             --revealed-bg: #e5c29f;
             --revealed-alt: #d7b899;
             --border-color: #4a752c;
-            --cell-size: calc(min(90vw / 19, (80vh - 60px) / 10));
+            --cell-size: calc(min(90vw / 19, (85vh - 60px) / 10));
         }
 
         * {
@@ -48,13 +48,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
         }
 
         #grid-border {
-            padding: 10px;
+            padding: 8px;
             background-color: var(--border-color);
-            border-radius: 8px;
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -76,6 +76,7 @@
             justify-content: center;
             font-weight: 900;
             font-size: calc(var(--cell-size) * 0.6);
+            overflow: visible;
         }
 
         .dirt {
@@ -91,21 +92,28 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            z-index: 2;
-            transition: transform 0.2s ease-in, opacity 0.2s;
+            z-index: 5;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1), opacity 0.3s;
+            transform-origin: center;
         }
         .grass.light { background-color: var(--bg-color); }
         .grass.dark { background-color: var(--bg-alt); }
 
         .popped {
-            transform: scale(0);
+            transform: scale(0) translateY(20px);
             opacity: 0;
             pointer-events: none;
         }
 
-        .content { z-index: 3; pointer-events: none; }
-        .flagged::after { content: '🚩'; z-index: 4; font-size: 0.7em; }
-        .mine::after { content: '💣'; z-index: 4; }
+        .cell.selected {
+            outline: 3px solid white;
+            outline-offset: -3px;
+            z-index: 10;
+        }
+
+        .content { z-index: 2; pointer-events: none; }
+        .flagged-icon { position: absolute; z-index: 6; pointer-events: none; font-size: 0.7em; }
+        .mine-icon { z-index: 3; pointer-events: none; }
 
         .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
         .n4 { color: #7b1fa2; }
@@ -116,28 +124,30 @@
             z-index: 1000;
             width: var(--cell-size);
             height: var(--cell-size);
+            pointer-events: none;
         }
 
         .menu-btn {
             position: absolute;
             width: var(--cell-size);
             height: var(--cell-size);
-            background: white;
+            background: var(--bg-color);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             font-size: calc(var(--cell-size) * 0.6);
-            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border: 2px solid white;
             pointer-events: auto;
         }
 
-        #btn-dig { top: calc(var(--cell-size) * -1); left: 0; }
-        #btn-flag { top: 0; left: calc(var(--cell-size) * -1); }
+        #btn-dig { top: calc(var(--cell-size) * -1.2); left: 0; }
+        #btn-flag { top: 0; left: calc(var(--cell-size) * -1.2); }
 
         #restart-btn {
             padding: 8px 16px;
-            background: #aad751;
+            background: var(--bg-color);
             border: none;
             border-radius: 4px;
             color: var(--border-color);
@@ -186,6 +196,7 @@
         minesGenerated = false;
         gridEl.innerHTML = '';
         menuEl.style.display = 'none';
+        selectedCell = null;
         document.getElementById('msg').innerText = "minesweeper";
         
         for (let r = 0; r < ROWS; r++) {
@@ -209,8 +220,17 @@
 
                 container.addEventListener('pointerup', (e) => handleTap(e, r, c));
                 
-                board[r][c] = { r, c, isMine: false, revealed: false, flagged: false, 
-                               neighborCount: 0, el: container, grass, content };
+                board[r][c] = { 
+                    r, c, 
+                    isMine: false, 
+                    revealed: false, 
+                    flagged: false, 
+                    neighborCount: 0, 
+                    el: container, 
+                    grass, 
+                    content,
+                    flagEl: null
+                };
                 gridEl.appendChild(container);
             }
         }
@@ -254,17 +274,26 @@
 
         if (cell.flagged) {
             toggleFlag(r, c);
-            menuEl.style.display = 'none';
+            clearSelection();
             return;
         }
 
         if (cell.revealed) return;
 
+        if (selectedCell) selectedCell.el.classList.remove('selected');
         selectedCell = cell;
+        cell.el.classList.add('selected');
+
         menuEl.style.display = 'block';
         const rect = gridEl.getBoundingClientRect();
-        menuEl.style.top = (rect.top + (r * cell.el.offsetHeight)) + 'px';
-        menuEl.style.left = (rect.left + (c * cell.el.offsetWidth)) + 'px';
+        menuEl.style.top = (r * cell.el.offsetHeight) + 'px';
+        menuEl.style.left = (c * cell.el.offsetWidth) + 'px';
+    }
+
+    function clearSelection() {
+        if (selectedCell) selectedCell.el.classList.remove('selected');
+        selectedCell = null;
+        menuEl.style.display = 'none';
     }
 
     function dig(r, c) {
@@ -287,8 +316,18 @@
 
     function toggleFlag(r, c) {
         const cell = board[r][c];
+        if (cell.revealed) return;
         cell.flagged = !cell.flagged;
-        cell.el.classList.toggle('flagged');
+        if (cell.flagged) {
+            const f = document.createElement('div');
+            f.classList.add('flagged-icon');
+            f.innerText = '🚩';
+            cell.el.appendChild(f);
+            cell.flagEl = f;
+        } else if (cell.flagEl) {
+            cell.flagEl.remove();
+            cell.flagEl = null;
+        }
     }
 
     function handleChord(r, c) {
@@ -320,12 +359,14 @@
 
     function endGame(won) {
         gameOver = true;
+        clearSelection();
         document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥";
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine) {
                     board[r][c].grass.classList.add('popped');
-                    board[r][c].content.classList.add('mine');
+                    board[r][c].content.innerText = '💣';
+                    board[r][c].content.classList.add('mine-icon');
                 }
             }
         }
@@ -333,19 +374,25 @@
 
     document.getElementById('btn-dig').onpointerup = (e) => {
         e.stopPropagation();
-        if (selectedCell) dig(selectedCell.r, selectedCell.c);
-        menuEl.style.display = 'none';
+        if (selectedCell) {
+            const r = selectedCell.r, c = selectedCell.c;
+            clearSelection();
+            dig(r, c);
+        }
     };
 
     document.getElementById('btn-flag').onpointerup = (e) => {
         e.stopPropagation();
-        if (selectedCell) toggleFlag(selectedCell.r, selectedCell.c);
-        menuEl.style.display = 'none';
+        if (selectedCell) {
+            const r = selectedCell.r, c = selectedCell.c;
+            toggleFlag(r, c);
+            clearSelection();
+        }
     };
 
     window.addEventListener('pointerdown', (e) => {
-        if (!menuEl.contains(e.target) && !e.target.classList.contains('cell')) {
-            menuEl.style.display = 'none';
+        if (!menuEl.contains(e.target) && !e.target.closest('.cell')) {
+            clearSelection();
         }
     });
 
