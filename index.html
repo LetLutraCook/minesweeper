@@ -1,383 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>minesweeper</title>
     <style>
-        :root {
-            --bg-color: #aad751;
-            --bg-alt: #a2d149;
-            --revealed-bg: #e5c29f;
-            --revealed-alt: #d7b899;
-            --header-bg: #4a752c;
-            --field-border: #578a34;
-            --btn-green: #578a34;
-            --grass-border: #87af3a;
-            /* Cell size is now set dynamically via JS */
-            --cell-size: 40px; 
-            --border-thick: 4px;
+        body {
+            background-color: f5f5f5;
         }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: none !important; 
-            user-select: none;
-        }
-
-        body, html {
-            position: fixed;
-            overflow: hidden;
-            width: 100%; height: 100%;
-            margin: 0;
-            background-color: var(--field-border);
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #header {
-            height: 60px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background-color: var(--header-bg);
-            color: white;
-            font-weight: bold;
-            z-index: 50;
-        }
-
-        #game-container {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--field-border);
-            padding: 10px;
-        }
-
-        #grid {
+        #game-board {
             display: grid;
-            position: relative;
-            border: 8px solid var(--field-border);
-            /* Grid template is now set dynamically via JS */
+            grid-template-columns: repeat(19, 30px);
+            gap: 1px;
+            background-color: #777;
+            width: max-content;
+            margin: 20px auto;
         }
-
         .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
-            position: relative;
-        }
-
-        .dirt {
-            position: absolute;
-            width: 100%; height: 100%;
-            z-index: 1;
-        }
-        .dirt.light { background-color: var(--revealed-bg); }
-        .dirt.dark { background-color: var(--revealed-alt); }
-
-        .border-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5;
-            pointer-events: none;
-            border-style: solid;
-            border-width: 0;
-            border-color: var(--grass-border);
-        }
-
-        .grass {
-            position: absolute;
-            width: 100%; height: 100%;
-            z-index: 10;
-            transition: transform 0.4s ease-out;
-            transform-origin: center;
-        }
-        .grass.light { background-color: var(--bg-color); }
-        .grass.dark { background-color: var(--bg-alt); }
-
-        .popped {
-            transform: scale(0) translateY(calc(var(--cell-size) * 0.3)) rotate(35deg) !important;
-            pointer-events: none;
-        }
-
-        .cell.selected::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border: 4px solid var(--btn-green);
-            z-index: 40;
-            pointer-events: none;
-        }
-
-        .content { 
-            position: absolute; z-index: 2; 
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%;
-            font-weight: 900; font-size: calc(var(--cell-size) * 0.6);
-        }
-
-        .n1 { color: #1976d2; } .n2 { color: #388e3c; } .n3 { color: #d32f2f; }
-        .n4 { color: #7b1fa2; }
-
-        #action-menu {
-            position: absolute;
-            display: none;
-            z-index: 100;
-            pointer-events: none;
-            width: var(--cell-size);
-            height: var(--cell-size);
-        }
-
-        .menu-btn {
-            position: absolute;
-            width: var(--cell-size);
-            height: var(--cell-size);
-            background: var(--btn-green);
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%;
-            pointer-events: auto;
-            font-size: calc(var(--cell-size) * 0.6);
-        }
-
-        #btn-dig { bottom: 100%; left: 0; }
-        #btn-flag { top: 0; right: 100%; }
-
-        select {
-            padding: 5px;
-            border-radius: 4px;
-            font-weight: bold;
-            background: var(--bg-color);
-            border: none;
-            color: var(--header-bg);
-        }
-
-        #restart-btn {
-            padding: 8px 16px; background: var(--bg-color);
-            border: none; border-radius: 4px;
-            color: var(--header-bg); font-weight: bold;
+            width: 30px;
+            height: 30px;
+            background-color: #bbb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
+    <div id="game-board"></div>
+    <script>
+        const gameBoard = document.getElementById('game-board');
 
-    <div id="header">
-        <select id="difficulty" onchange="initGame()">
-            <option value="easy">Easy (10x8)</option>
-            <option value="medium">Medium (18x14)</option>
-            <option value="hard">Hard (24x20)</option>
-        </select>
-        <span id="msg">minesweeper</span>
-        <button id="restart-btn" onclick="initGame()">RESTART</button>
-    </div>
-    
-    <div id="game-container">
-        <div id="grid"></div>
-        <div id="action-menu">
-            <div id="btn-dig" class="menu-btn">⛏️</div>
-            <div id="btn-flag" class="menu-btn">🚩</div>
-        </div>
-    </div>
-
-<script>
-    let ROWS, COLS, MINES;
-    let board = [], gameOver = false, minesGenerated = false, selectedCell = null, lastTap = 0;
-
-    const gridEl = document.getElementById('grid');
-    const menuEl = document.getElementById('action-menu');
-
-    function initGame() {
-        // Set dimensions based on dropdown
-        const diff = document.getElementById('difficulty').value;
-        if (diff === 'easy') { ROWS = 8; COLS = 10; MINES = 10; }
-        else if (diff === 'medium') { ROWS = 14; COLS = 18; MINES = 40; }
-        else { ROWS = 20; COLS = 24; MINES = 99; }
-
-        // Scaling logic: Calculate cell size to fit the screen
-        const padding = 40;
-        const availableW = window.innerWidth - padding;
-        const availableH = window.innerHeight - 60 - padding;
-        const cellSize = Math.floor(Math.min(availableW / COLS, availableH / ROWS));
-        
-        document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
-        gridEl.style.gridTemplateColumns = `repeat(${COLS}, ${cellSize}px)`;
-        gridEl.style.gridTemplateRows = `repeat(${ROWS}, ${cellSize}px)`;
-
-        board = []; gameOver = false; minesGenerated = false;
-        gridEl.innerHTML = ''; menuEl.style.display = 'none'; selectedCell = null;
-        document.getElementById('msg').innerText = "minesweeper";
-        
-        for (let r = 0; r < ROWS; r++) {
-            board[r] = [];
-            for (let c = 0; c < COLS; c++) {
-                const container = document.createElement('div');
-                container.classList.add('cell');
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const cellData = board[y][x];
+                const cellDiv = document.createElement('div');
                 
-                const dirt = document.createElement('div');
-                dirt.classList.add('dirt', (r+c)%2===0 ? 'light' : 'dark');
+                cellDiv.classList.add('cell'); 
                 
-                const borderLayer = document.createElement('div');
-                borderLayer.classList.add('border-layer');
-
-                const grass = document.createElement('div');
-                grass.classList.add('grass', (r+c)%2===0 ? 'light' : 'dark');
-                
-                const content = document.createElement('div');
-                content.classList.add('content');
-
-                container.append(dirt, borderLayer, grass, content);
-                container.addEventListener('pointerup', (e) => handleTap(e, r, c));
-                
-                board[r][c] = { r, c, isMine: false, revealed: false, flagged: false, 
-                                neighborCount: 0, el: container, grass, borderLayer, content };
-                gridEl.appendChild(container);
-            }
-        }
-    }
-
-    function handleTap(e, r, c) {
-        if (gameOver) return;
-        const cell = board[r][c];
-        const now = Date.now();
-
-        if (now - lastTap < 300 && cell.revealed) { handleChord(r, c); return; }
-        lastTap = now;
-
-        if (!minesGenerated) { generateMines(r, c); dig(r, c); return; }
-        if (cell.flagged) { toggleFlag(r, c); clearSelection(); return; }
-        if (cell.revealed) return;
-
-        if (selectedCell) selectedCell.el.classList.remove('selected');
-        selectedCell = cell;
-        cell.el.classList.add('selected');
-
-        menuEl.style.display = 'block';
-        menuEl.style.transform = `translate(${c * 100}%, ${r * 100}%)`;
-    }
-
-    function handleChord(r, c) {
-        const cell = board[r][c];
-        let flags = 0;
-        iterate(r, c, (nr, nc) => { if (board[nr][nc].flagged) flags++; });
-        if (flags === cell.neighborCount) {
-            iterate(r, c, (nr, nc) => dig(nr, nc));
-        }
-    }
-
-    function updateBorders() {
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const cell = board[r][c];
-                if (!cell.revealed) {
-                    cell.borderLayer.style.borderWidth = '0';
-                    continue;
+                // temporarily show mines and counts for testing
+                if (cellData.isMine) {
+                    cellDiv.textContent = '💣';
+                } else if (cellData.neighborCount > 0) {
+                    cellDiv.textContent = cellData.neighborCount;
                 }
-                const t = (r > 0 && !board[r-1][c].revealed) ? 'var(--border-thick)' : '0';
-                const b = (r < ROWS-1 && !board[r+1][c].revealed) ? 'var(--border-thick)' : '0';
-                const l = (c > 0 && !board[r][c-1].revealed) ? 'var(--border-thick)' : '0';
-                const r_edge = (c < COLS-1 && !board[r][c+1].revealed) ? 'var(--border-thick)' : '0';
-                
-                cell.borderLayer.style.borderWidth = `${t} ${r_edge} ${b} ${l}`;
+                gameBoard.appendChild(cellDiv);
             }
         }
-    }
+        
+        // mine area size
+        const width = 19;
+        const height= 10;
 
-    function dig(r, c) {
-        const cell = board[r][c];
-        if (cell.revealed || cell.flagged || gameOver) return;
-        cell.revealed = true;
-        cell.grass.classList.add('popped');
+        // board keeps track of, well, board
+        let board = [];
 
-        if (cell.isMine) return endGame(false);
-
-        if (cell.neighborCount > 0) {
-            cell.content.innerText = cell.neighborCount;
-            cell.content.classList.add('n' + cell.neighborCount);
-        } else {
-            iterate(r, c, (nr, nc) => dig(nr, nc));
+        // generate the board
+        for (let y = 0; y < height; y++) {
+            let row = [];
+            for (let x = 0; x < width; x++) {
+                // random chance to be a mine
+                let randomNumber = Math.floor(Math.random() * 10) + 1;
+                // if it is a mine, push that
+                if (randomNumber === 5) {
+                    row.push({
+                        x: x,
+                        y: y,
+                        isMine: true,
+                        revealed: false,
+                        neighborCount: 0
+                    });
+                // not a mine, and push it
+                } else {
+                    row.push({
+                        x: x,
+                        y: y,
+                        isMine: false,
+                        revealed: false,
+                        neighborCount: 0
+                    });
+                }
+            }
+            board.push(row);
         }
-        updateBorders();
-        checkWin();
-    }
 
-    function toggleFlag(r, c) {
-        const cell = board[r][c];
-        if (cell.revealed) return;
-        cell.flagged = !cell.flagged;
-        cell.content.innerText = cell.flagged ? '🚩' : '';
-    }
-
-    function generateMines(sr, sc) {
-        let p = 0;
-        while (p < MINES) {
-            let r = Math.floor(Math.random() * ROWS), c = Math.floor(Math.random() * COLS);
-            if (!board[r][c].isMine && (Math.abs(r-sr)>1 || Math.abs(c-sc)>1)) {
-                board[r][c].isMine = true; p++;
+        // check every square if it has bombs around it or not
+        for (let boardY = 0; boardY < height; boardY++) {
+            for (let boardX = 0; boardX < width; boardX++) {
+                let neighborCount = 0;
+                // if current square is not a bomb
+                if (!board[boardY][boardX].isMine) {
+                    // check in 3x3 area for bombs
+                    for (let x = -1; x < 2; x++) {
+                        for (let y = -1; y < 2; y++) {
+                            // prevent checking out of bounds areas
+                            if (boardX + x >= width || boardX + x < 0 || boardY + y >= height || boardY + y < 0) {
+                                continue;
+                            }
+                            // if the square around current square is bomb, increase neighbor count
+                            if (board[boardY + y][boardX + x].isMine) {
+                                neighborCount++;
+                                // push the neighbor count
+                                board[boardY][boardX].neighborCount = neighborCount;
+                            }
+                        }
+                    }
+                }
             }
         }
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (board[r][c].isMine) continue;
-                let n = 0;
-                iterate(r, c, (nr, nc) => { if (board[nr][nc].isMine) n++; });
-                board[r][c].neighborCount = n;
-            }
-        }
-        minesGenerated = true;
-    }
-
-    function clearSelection() {
-        if (selectedCell) selectedCell.el.classList.remove('selected');
-        selectedCell = null;
-        menuEl.style.display = 'none';
-    }
-
-    function iterate(r, c, cb) {
-        for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-                if (dr === 0 && dc === 0) continue;
-                let nr = r + dr, nc = c + dc;
-                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) cb(nr, nc);
-            }
-        }
-    }
-
-    function checkWin() {
-        let rev = 0;
-        board.flat().forEach(c => { if(c.revealed) rev++; });
-        if (rev === (ROWS * COLS) - MINES) endGame(true);
-    }
-
-    function endGame(won) {
-        gameOver = true;
-        clearSelection();
-        document.getElementById('msg').innerText = won ? "WIN! 🎉" : "BOOM! 💥";
-        board.flat().forEach(c => {
-            if (c.isMine) {
-                c.grass.classList.add('popped');
-                c.content.innerText = '💣';
-            }
-        });
-        updateBorders();
-    }
-
-    document.getElementById('btn-dig').onpointerup = (e) => {
-        e.stopPropagation();
-        if (selectedCell) { dig(selectedCell.r, selectedCell.c); clearSelection(); }
-    };
-
-    document.getElementById('btn-flag').onpointerup = (e) => {
-        e.stopPropagation();
-        if (selectedCell) { toggleFlag(selectedCell.r, selectedCell.c); clearSelection(); }
-    };
-
-    window.addEventListener('pointerdown', (e) => {
-        if (!menuEl.contains(e.target) && !e.target.closest('.cell')) clearSelection();
-    });
-
-    initGame();
-</script>
+    </script>
 </body>
 </html>
